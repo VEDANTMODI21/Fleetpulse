@@ -84,7 +84,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: cp .env.example .env && docker compose up -d --build && sleep 120
+      - name: Configure ephemeral local credentials
+        run: |
+          POSTGRES_PASSWORD=$(openssl rand -hex 32)
+          JWT_SECRET=$(openssl rand -hex 32)
+          DEMO_PASSWORD=$(openssl rand -hex 32)
+          INGEST_KEY_ALPHA=$(openssl rand -hex 32)
+          INGEST_KEY_BETA=$(openssl rand -hex 32)
+          INGEST_KEY_GAMMA=$(openssl rand -hex 32)
+          printf 'POSTGRES_PASSWORD=%s\nJWT_SECRET=%s\nDEMO_PASSWORD=%s\nINGEST_KEY_ALPHA=%s\nINGEST_KEY_BETA=%s\nINGEST_KEY_GAMMA=%s\nSIM_RATE=10000\n' \
+            "$POSTGRES_PASSWORD" "$JWT_SECRET" "$DEMO_PASSWORD" "$INGEST_KEY_ALPHA" "$INGEST_KEY_BETA" "$INGEST_KEY_GAMMA" > .env
+          {
+            echo "DATABASE_URL=postgresql://fleet:$POSTGRES_PASSWORD@localhost:5432/fleetpulse"
+            echo "DEMO_PASSWORD=$DEMO_PASSWORD"
+          } >> "$GITHUB_ENV"
+      - run: docker compose up -d --build && sleep 120
       - name: API load test
         run: pip install httpx numpy psycopg[binary] && CONC=16 DUR=60 python -m bench.api_load
       - name: DAST (OWASP ZAP API scan)
