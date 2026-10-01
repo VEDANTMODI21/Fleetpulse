@@ -13,9 +13,9 @@ BASE = os.environ.get("API", "http://localhost:8000")
 
 
 def main():
-      c = httpx.Client(base_url=BASE, timeout=10)
-      password = os.environ["DEMO_PASSWORD"]
-      tok = c.post("/auth/token", json={"email": "manager7@fleet7.dev", "password": password}).json()["access_token"]
+    c = httpx.Client(base_url=BASE, timeout=10)
+    password = os.environ["DEMO_PASSWORD"]
+    tok = c.post("/auth/token", json={"email": "manager7@fleet7.dev", "password": password}).json()["access_token"]
     H = {"Authorization": f"Bearer {tok}"}
     checks = []
 
@@ -40,12 +40,12 @@ def main():
           == c.post("/auth/token", json={"email": "manager7@fleet7.dev", "password": "x"}).json()["title"])
     # API1 BOLA / tenant isolation
     check("cross-tenant list denied", "API1", c.get("/api/v1/vehicles/at-risk?fleet_id=8", headers=H).status_code == 403)
-      admin = c.post("/auth/token", json={"email": "admin@fleetpulse.dev", "password": password}).json()["access_token"]
+    admin("/auth/token", json={"email": "admin@fleetpulse.dev", "password": password}).json()["access_token"]
     other_vin = c.get("/api/v1/vehicles/at-risk?fleet_id=8&limit=1",
                       headers={"Authorization": f"Bearer {admin}"}).json()["items"][0]["vin"]
     check("cross-tenant object read returns 404", "API1", c.get(f"/api/v1/vehicles/{other_vin}", headers=H).status_code == 404)
     # API5 function-level authz
-      tech = c.post("/auth/token", json={"email": "tech7@fleet7.dev", "password": password}).json()["access_token"]
+    tech("/auth/token", json={"email": "tech7@fleet7.dev", "password": password}).json()["access_token"]
     check("technician cannot approve / erase / read audit", "API5", all(
         s == 403 for s in [c.post("/api/v1/work-orders/1/approve", headers={"Authorization": f"Bearer {tech}"}).status_code,
                            c.delete("/api/v1/privacy/drivers/1", headers={"Authorization": f"Bearer {tech}"}).status_code,
