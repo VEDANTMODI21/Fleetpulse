@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FleetPulse – Pipeline Ops</title>
+<style>
+body{margin:0;font:14px/1.4 system-ui,sans-serif;background:#0d1117;color:#e6edf3}
+header{padding:12px 20px;border-bottom:1px solid #30363d;display:flex;gap:16px;align-items:center}h1{font-size:16px;margin:0}
+main{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:16px 20px}
+.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px 14px}
+.card h2{font-size:12px;color:#8b949e;text-transform:uppercase;letter-spacing:.04em;margin:0 0 8px}
+.kpis{grid-column:1/-1;display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.kpi b{font-size:24px;display:block;font-variant-numeric:tabular-nums}.kpi span{color:#8b949e;font-size:12px}
+svg text{fill:#8b949e;font-size:10px}.muted{color:#8b949e}
+@media (max-width:900px){main{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
+</style></head>
+<body><header><h1>FleetPulse · Pipeline operations</h1><span class="muted" id="ts"></span>
+<label>Account <input id="user" type="email" autocomplete="username"></label>
+<label>Password <input id="password" type="password" autocomplete="current-password"></label>
+<button id="login" type="button">Sign in</button><span id="login-error" role="status"></span></header>
+<main>
+<section class="kpis">
+  <div class="card kpi"><b id="eps">–</b><span>events/s processed</span></div>
+  <div class="card kpi"><b id="lag">–</b><span>consumer lag (events)</span></div>
+  <div class="card kpi"><b id="alerts">–</b><span>alerts emitted</span></div>
+  <div class="card kpi"><b id="p95">–</b><span>event→alert p95 (ms)</span></div>
+  <div class="card kpi"><b id="dups">–</b><span>duplicates / late dropped</span></div>
+</section>
+<section class="card"><h2>Throughput (events/s)</h2><div id="c-eps"></div></section>
+<section class="card"><h2>Consumer lag (events)</h2><div id="c-lag"></div></section>
+<section class="card"><h2>Lag per partition</h2><div id="c-part"></div></section>
+<section class="card"><h2>Stream workers</h2><div id="w"></div></section>
+</main>
+<script src="/static/ops.js"></script></body></html>

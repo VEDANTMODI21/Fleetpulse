@@ -1,0 +1,12 @@
+# default deny; only the ingress controller reaches api/ingest; workers have no inbound traffic.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: default-deny}
+spec: {podSelector: {}, policyTypes: [Ingress]}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-ingress-controller}
+spec:
+  podSelector: {matchExpressions: [{key: app, operator: In, values: [api, ingest]}]}
+  ingress: [{from: [{namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: ingress-nginx}}}]}]

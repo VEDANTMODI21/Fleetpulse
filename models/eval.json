@@ -1,0 +1,138 @@
+{
+  "rows_train": 3092279,
+  "rows_train_sampled": 792840,
+  "rows_test": 1496245,
+  "pos_rate_test": 0.008661683079976876,
+  "feature_build_s": 42.5,
+  "train_s": 19.0,
+  "inference_us_per_row": 3.99,
+  "threshold_top1pct": 0.14151778234309312,
+  "events": {
+    "gbm_top1pct": {
+      "events": 1073,
+      "caught": 936,
+      "recall": 0.872,
+      "median_lead_days": 7.0,
+      "flags_per_day": 997.5
+    },
+    "thresholds_any_rule": {
+      "events": 1073,
+      "caught": 978,
+      "recall": 0.911,
+      "median_lead_days": 7.0,
+      "flags_per_day": 5980.3
+    },
+    "severe_dtc_rule": {
+      "events": 1073,
+      "caught": 892,
+      "recall": 0.831,
+      "median_lead_days": 6.0,
+      "flags_per_day": 2012.7
+    }
+  },
+  "recall_by_mode": {
+    "-1": 0.001,
+    "0": 0.678,
+    "1": 0.765,
+    "2": 0.823,
+    "3": 0.734,
+    "4": 0.805
+  },
+  "results": [
+    {
+      "model": "Baseline A: severe DTC rule",
+      "pr_auc": 0.12345662363536719,
+      "roc_auc": 0.7557840047909176,
+      "precision@1%": 0.22614510197258442,
+      "recall@1%": 0.2609567901234568,
+      "flagged@1%": 14955,
+      "tp@1%": 3382
+    },
+    {
+      "model": "Baseline B: static thresholds",
+      "pr_auc": 0.28047149714476693,
+      "roc_auc": 0.8391499408303651,
+      "precision@1%": 0.408893346706787,
+      "recall@1%": 0.47183641975308643,
+      "flagged@1%": 14955,
+      "tp@1%": 6115
+    },
+    {
+      "model": "Logistic regression",
+      "pr_auc": 0.44309405442927524,
+      "roc_auc": 0.8951937597987483,
+      "precision@1%": 0.5491140086927448,
+      "recall@1%": 0.633641975308642,
+      "flagged@1%": 14955,
+      "tp@1%": 8212
+    },
+    {
+      "model": "GBM without self-baseline z",
+      "pr_auc": 0.5259830732124832,
+      "roc_auc": 0.9073790047965358,
+      "precision@1%": 0.5705115346038114,
+      "recall@1%": 0.6583333333333333,
+      "flagged@1%": 14955,
+      "tp@1%": 8532
+    },
+    {
+      "model": "FleetPulse GBM (all features)",
+      "pr_auc": 0.5311486252749894,
+      "roc_auc": 0.9069583267632065,
+      "precision@1%": 0.5726512871949181,
+      "recall@1%": 0.6608024691358024,
+      "flagged@1%": 14955,
+      "tp@1%": 8564
+    }
+  ],
+  "top_features": [
+    [
+      "cell_temp_spread_slope7",
+      0.0549
+    ],
+    [
+      "misfire_cnt_slope7",
+      0.0338
+    ],
+    [
+      "sev_dtc_7d",
+      0.0331
+    ],
+    [
+      "oil_kpa_min_last",
+      0.0203
+    ],
+    [
+      "misfire_cnt_last",
+      0.0151
+    ],
+    [
+      "coolant_max_min3",
+      0.0089
+    ],
+    [
+      "cell_temp_spread_last",
+      0.0057
+    ],
+    [
+      "odo_km",
+      0.0057
+    ],
+    [
+      "aux_v_min_mean7",
+      0.004
+    ],
+    [
+      "aux_v_min_max3",
+      0.0039
+    ],
+    [
+      "aux_v_min_last",
+      0.0022
+    ],
+    [
+      "coolant_max_last",
+      0.0021
+    ]
+  ]
+}

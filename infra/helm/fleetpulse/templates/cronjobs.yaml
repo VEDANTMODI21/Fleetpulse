@@ -1,0 +1,13 @@
+# Nightly batch: rebuild features from the lake, score all vehicles, refresh materialised views.
+apiVersion: batch/v1
+kind: CronJob
+metadata: {name: nightly-scoring}
+spec:
+  schedule: "15 1 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          {{- include "fp.pod" (dict "root" . "name" "scoring" "resources" .Values.worker.resources "command" (list "sh" "-c" "python -m fleetpulse.ml.score --data $DATA_DIR --models /app/models")) | nindent 10 }}

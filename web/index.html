@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FleetPulse – Predictive Maintenance</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#16202c;--muted:#5d6b7a;--line:#e3e7ec;--accent:#1f6feb;--hi:#d1242f;--med:#bf8700;--lo:#1a7f37}
+*{box-sizing:border-box}body{margin:0;font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+header{display:flex;align-items:center;gap:16px;padding:12px 20px;background:#0d1b2a;color:#fff}
+header h1{font-size:17px;margin:0;font-weight:650}header .sp{flex:1}
+header select,header input,header button{font:inherit;padding:6px 10px;border-radius:6px;border:0}
+main{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;padding:16px 20px;max-width:1500px;margin:auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.card h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 0 10px}
+.kpis{grid-column:1/-1;display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.kpi b{display:block;font-size:26px;font-variant-numeric:tabular-nums}.kpi span{color:var(--muted);font-size:12px}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+th{font-size:12px;color:var(--muted);font-weight:600}tr.row{cursor:pointer}tr.row:hover{background:#f0f4fa}
+.bar{height:8px;border-radius:4px;background:#eef1f4;width:90px;display:inline-block;vertical-align:middle;margin-right:6px}
+.bar i{display:block;height:100%;border-radius:4px}
+.pill{font-size:11px;padding:2px 7px;border-radius:10px;background:#eef1f4;white-space:nowrap}
+.CRITICAL{background:#ffebe9;color:var(--hi)}.WARN{background:#fff8c5;color:var(--med)}
+#feed{max-height:260px;overflow:auto}#feed div{padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
+#feed div.new{animation:flash 2s}@keyframes flash{from{background:#ffebe9}to{background:transparent}}
+#chat{display:flex;flex-direction:column;gap:8px}#chatlog{max-height:300px;overflow:auto;white-space:pre-wrap;font-size:13px}
+#chatlog .q{color:var(--accent);font-weight:600;margin-top:8px}
+input[type=text]{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font:inherit}
+button.b{background:var(--accent);color:#fff;border:0;border-radius:6px;padding:7px 12px;font:inherit;cursor:pointer}
+button.g{background:#eef1f4;color:var(--ink)}
+#drawer{position:fixed;top:0;right:0;width:min(560px,100%);height:100%;background:#fff;box-shadow:-8px 0 24px rgba(0,0,0,.12);padding:18px;overflow:auto;transform:translateX(105%);transition:.2s}
+#drawer.open{transform:none}.muted{color:var(--muted)}svg text{font-size:10px;fill:var(--muted)}
+.factors li{margin:2px 0}.small{font-size:12px}
+@media (max-width:900px){main{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<header>
+  <h1>FleetPulse · Predictive Maintenance</h1><span class="sp"></span>
+  <select id="user" aria-label="Account">
+    <option value="manager7@fleet7.dev">Fleet manager · Fleet-007</option>
+    <option value="tech7@fleet7.dev">Technician · Fleet-007</option>
+    <option value="manager12@fleet12.dev">Fleet manager · Fleet-012</option>
+    <option value="admin@fleetpulse.dev">Platform admin · all fleets</option>
+  </select>
+  <input type="password" id="password" aria-label="Password" placeholder="Password" autocomplete="current-password">
+  <button id="login">Sign in</button>
+  <span id="login-error" role="status"></span>
+</header>
+<main>
+  <section class="kpis">
+    <div class="card kpi"><b id="k-veh">–</b><span>vehicles scored</span></div>
+    <div class="card kpi"><b id="k-high" style="color:var(--hi)">–</b><span>high risk (≥50% in 7 days)</span></div>
+    <div class="card kpi"><b id="k-med" style="color:var(--med)">–</b><span>medium risk (15–50%)</span></div>
+    <div class="card kpi"><b id="k-alerts">–</b><span>open alerts</span></div>
+    <div class="card kpi"><b id="k-brk">–</b><span>breakdowns, last 30 days</span></div>
+  </section>
+  <section class="card">
+    <h2>Vehicles most likely to break down in the next 7 days <span id="scored" class="muted"></span></h2>
+    <table><thead><tr><th>VIN</th><th>Vehicle</th><th>City</th><th>7-day risk</th><th>Main driver</th><th>Alerts</th></tr></thead>
+    <tbody id="risk"></tbody></table>
+    <p><button class="b g" id="more">Load more</button></p>
+  </section>
+  <section style="display:flex;flex-direction:column;gap:16px">
+    <div class="card"><h2>Live alerts</h2><div id="feed"><div class="muted">Waiting for events…</div></div></div>
+    <div class="card"><h2>Workshop plan this week</h2>
+      <div class="small">Technician hours <input id="hours" type="number" value="40" min="1" max="400" style="width:70px"> <button class="b" id="plan">Optimise</button></div>
+      <div id="planout" class="small"></div></div>
+    <div class="card" id="chat"><h2>Maintenance copilot</h2>
+      <div id="chatlog" class="muted">Try: "which vehicles are most likely to break down? top 5" or paste a VIN.</div>
+      <input type="text" id="q" placeholder="Ask about your fleet…" maxlength="1000"></div>
+  </section>
+  <section class="card" style="grid-column:1/-1"><h2>Fleet trend (daily)</h2><div id="trend"></div></section>
+</main>
+<aside id="drawer" aria-live="polite"></aside>
+<script src="/static/app.js"></script>
+</body>
+</html>

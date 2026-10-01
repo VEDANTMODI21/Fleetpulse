@@ -1,0 +1,9 @@
+-r requirements.txt
+pytest
+pytest-cov
+behave
+testcontainers[postgres,redis]
+ruff
+bandit
+pip-audit
+semgrep

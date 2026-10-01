@@ -1,0 +1,25 @@
+<testsuite name="privacy.Privacy and compliance" tests="2" errors="0" failures="0" skipped="0" time="0.345057" timestamp="2026-09-27T15:37:59.250182" hostname="vm"><testcase classname="privacy.Privacy and compliance" name="Right to erasure of a driver" status="passed" time="0.32783"><system-out>
+<![CDATA[
+@scenario.begin
+  Scenario: Right to erasure of a driver
+    Given I am signed in as the fleet manager of fleet 1 ... passed in 0.000s
+    When I request erasure of a driver in my fleet ... passed in 0.017s
+    Then the driver's identity is removed ... passed in 0.001s
+    And the audit chain still verifies ... passed in 0.310s
+
+@scenario.end
+--------------------------------------------------------------------------------
+]]>
+</system-out></testcase><testcase classname="privacy.Privacy and compliance" name="Analysts only see coarse locations" status="passed" time="0.017227"><system-out>
+<![CDATA[
+@scenario.begin
+  Scenario: Analysts only see coarse locations
+    Given I am signed in as an analyst of fleet 1 ... passed in 0.000s
+    And a vehicle of fleet 1 has a live position ... passed in 0.002s
+    When I open that vehicle ... passed in 0.015s
+    Then its location is rounded to 2 decimal places ... passed in 0.000s
+
+@scenario.end
+--------------------------------------------------------------------------------
+]]>
+</system-out></testcase></testsuite>

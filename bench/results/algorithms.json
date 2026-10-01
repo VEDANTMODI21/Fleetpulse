@@ -1,0 +1,53 @@
+{
+  "vin_validate": {
+    "n": 200000,
+    "seconds": 0.387,
+    "per_sec": 516282,
+    "valid_accepted": 200000,
+    "bad_checkdigit_rejected": 100000,
+    "bad_n": 100000
+  },
+  "dtc_parse": {
+    "n": 200000,
+    "seconds": 1.127,
+    "per_sec": 177424
+  },
+  "bloom": {
+    "n": 1000000,
+    "bits_MB": 1.8,
+    "k": 10,
+    "insert_per_sec": 223272,
+    "measured_fp_rate": 0.00113,
+    "target_fp_rate": 0.001
+  },
+  "count_min_topk": {
+    "n": 500000,
+    "per_sec": 286267,
+    "top10_overlap": 10,
+    "mean_overestimate": 2.44,
+    "memory_counters": 10240
+  },
+  "sliding_window": {
+    "n": 1000000,
+    "per_sec": 1824614
+  },
+  "geohash": {
+    "n": 200000,
+    "per_sec": 186398
+  },
+  "knapsack_dp": {
+    "n": 500,
+    "budget_hours": 30,
+    "positive_value_items": 286,
+    "seconds": 0.001,
+    "dp_value": 103930.4,
+    "greedy_value": 103878.5,
+    "dp_gain_pct": 0.05
+  },
+  "dijkstra": {
+    "nodes": 90000,
+    "edges": 358800,
+    "depots": 40,
+    "ms_per_query": 4.6
+  }
+}

@@ -1,0 +1,64 @@
+-- BEFORE (560.579 ms)
+SELECT d.day, count(*), sum(d.km), sum(d.idle_hours), sum(d.breakdown::int), avg(d.coolant_max)
+           FROM vehicle_daily d JOIN vehicle v ON v.id = d.vehicle_id
+           WHERE v.fleet_id = 7 GROUP BY d.day ORDER BY d.day
+
+Finalize GroupAggregate  (cost=57196.23..57204.51 rows=30 width=36) (actual time=534.680..534.860 rows=30 loops=1)
+  Group Key: d.day
+  Buffers: shared hit=4604 read=29584
+  ->  Gather Merge  (cost=57196.23..57203.23 rows=60 width=60) (actual time=534.666..534.825 rows=89 loops=1)
+        Workers Planned: 2
+        Workers Launched: 2
+        Buffers: shared hit=4604 read=29584
+        ->  Sort  (cost=56196.21..56196.29 rows=30 width=60) (actual time=508.423..508.433 rows=30 loops=3)
+              Sort Key: d.day
+              Sort Method: quicksort  Memory: 28kB
+              Buffers: shared hit=4604 read=29584
+              Worker 0:  Sort Method: quicksort  Memory: 27kB
+              Worker 1:  Sort Method: quicksort  Memory: 28kB
+              ->  Partial HashAggregate  (cost=56195.17..56195.47 rows=30 width=60) (actual time=508.384..508.398 rows=30 loops=3)
+                    Group Key: d.day
+                    Batches: 1  Memory Usage: 24kB
+                    Buffers: shared hit=4588 read=29584
+                    Worker 0:  Batches: 1  Memory Usage: 24kB
+                    Worker 1:  Batches: 1  Memory Usage: 24kB
+                    ->  Hash Join  (cost=2259.04..55622.47 rows=32726 width=17) (actual time=12.424..501.446 rows=26388 loops=3)
+                          Hash Cond: (d.vehicle_id = v.id)
+                          Buffers: shared hit=4588 read=29584
+                          ->  Parallel Append  (cost=0.00..50090.25 rows=1246875 width=21) (actual time=0.018..332.864 rows=997507 loops=3)
+                                Buffers: shared hit=1632 read=29584
+                                ->  Seq Scan on vehicle_daily_2026_06 d_1  (cost=0.00..0.00 rows=1 width=21) (actual time=0.006..0.007 rows=0 loops=1)
+                                ->  Seq Scan on vehicle_daily_2026_09 d_4  (cost=0.00..0.00 rows=1 width=21) (actual time=0.003..0.003 rows=0 loops=1)
+                                ->  Parallel Seq Scan on vehicle_daily_2026_08 d_3  (cost=0.00..42181.09 rows=1205309 width=21) (actual time=0.029..202.895 rows=964255 loops=3)
+                                      Buffers: shared hit=544 read=29584
+                                ->  Parallel Seq Scan on vehicle_daily_2026_07 d_2  (cost=0.00..1674.79 rows=58679 width=21) (actual time=0.009..8.009 rows=49878 loops=2)
+                                      Buffers: shared hit=1088
+                          ->  Hash  (cost=2226.00..2226.00 rows=2643 width=4) (actual time=12.361..12.364 rows=2645 loops=3)
+                                Buckets: 4096  Batches: 1  Memory Usage: 125kB
+                                Buffers: shared hit=2928
+                                ->  Seq Scan on vehicle v  (cost=0.00..2226.00 rows=2643 width=4) (actual time=0.011..10.493 rows=2645 loops=3)
+                                      Filter: (fleet_id = 7)
+                                      Rows Removed by Filter: 97355
+                                      Buffers: shared hit=2928
+Planning:
+  Buffers: shared hit=8
+Planning Time: 0.509 ms
+Execution Time: 534.969 ms
+
+-- AFTER (0.046 ms)
+SELECT day, vehicles_reporting, km, idle_hours, breakdowns, avg_coolant_max
+           FROM fleet_daily_summary WHERE fleet_id = 7 ORDER BY day
+
+Sort  (cost=21.62..21.70 rows=30 width=36) (actual time=0.017..0.048 rows=30 loops=1)
+  Sort Key: day
+  Sort Method: quicksort  Memory: 26kB
+  Buffers: shared hit=3
+  ->  Bitmap Heap Scan on fleet_daily_summary  (cost=4.51..20.88 rows=30 width=36) (actual time=0.008..0.011 rows=30 loops=1)
+        Recheck Cond: (fleet_id = 7)
+        Heap Blocks: exact=1
+        Buffers: shared hit=3
+        ->  Bitmap Index Scan on ux_fds  (cost=0.00..4.50 rows=30 width=0) (actual time=0.005..0.005 rows=30 loops=1)
+              Index Cond: (fleet_id = 7)
+              Buffers: shared hit=2
+Planning Time: 0.031 ms
+Execution Time: 0.058 ms

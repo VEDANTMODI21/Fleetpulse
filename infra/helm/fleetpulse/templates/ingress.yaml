@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.3"
+    nginx.ingress.kubernetes.io/limit-rps: "200"
+spec:
+  ingressClassName: nginx
+  tls: [{hosts: [{{ .Values.ingress.host | quote }}], secretName: {{ .Values.ingress.tlsSecret }}}]
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http: {paths: [{path: /, pathType: Prefix, backend: {service: {name: api, port: {number: 80}}}}]}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingest
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.3"
+    nginx.ingress.kubernetes.io/auth-tls-verify-client: "on"
+    nginx.ingress.kubernetes.io/auth-tls-secret: "{{ .Release.Namespace }}/{{ .Values.ingress.mtlsCaSecret }}"
+    nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "8m"
+spec:
+  ingressClassName: nginx
+  tls: [{hosts: [{{ .Values.ingress.ingestHost | quote }}], secretName: {{ .Values.ingress.tlsSecret }}}]
+  rules:
+    - host: {{ .Values.ingress.ingestHost | quote }}
+      http: {paths: [{path: /ingest, pathType: Prefix, backend: {service: {name: ingest, port: {number: 80}}}}]}

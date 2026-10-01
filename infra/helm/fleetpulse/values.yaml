@@ -1,0 +1,32 @@
+image: {repository: ghcr.io/fleetpulse/fleetpulse, tag: "1.0.0", pullPolicy: IfNotPresent}
+# Cloud-specific endpoints are the ONLY thing that changes between AWS / GCP / Azure / kind.
+config:
+  BUS: kafka
+  KAFKA_BROKERS: "kafka-bootstrap:9092"
+  PARTITIONS: "48"
+  REDIS_URL: "rediss://redis:6379/0"
+  LAKE_DIR: "s3://fleetpulse-lake/raw"
+  OIDC_ISSUER: "https://idp.example.com/realms/fleetpulse"
+  RATE_PER_S: "50"
+  RATE_BURST: "100"
+secrets:
+  existingSecret: fleetpulse-secrets        # synced by External Secrets Operator from Vault / AWS SM / GCP SM
+api:
+  replicas: 3
+  autoscaling: {min: 3, max: 30, cpu: 60}
+  resources: {requests: {cpu: 500m, memory: 512Mi}, limits: {cpu: "2", memory: 1Gi}}
+ingest:
+  replicas: 4
+  autoscaling: {min: 4, max: 40, cpu: 65}
+  resources: {requests: {cpu: "1", memory: 512Mi}, limits: {cpu: "1", memory: 1Gi}}
+worker:
+  # one replica per partition group; KEDA scales on consumer lag
+  replicas: 6
+  maxReplicas: 48
+  lagThreshold: "20000"
+  resources: {requests: {cpu: "1", memory: 2Gi}, limits: {cpu: "1", memory: 3Gi}}
+ingress:
+  host: api.fleetpulse.example.com
+  ingestHost: ingest.fleetpulse.example.com
+  tlsSecret: fleetpulse-tls
+  mtlsCaSecret: oem-client-ca                # client certs required on ingest host (mTLS)

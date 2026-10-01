@@ -1,0 +1,106 @@
+name: ci
+on: [push, pull_request]
+permissions: {contents: read, security-events: write, packages: write}
+
+jobs:
+  lint-sast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11", cache: pip}
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check fleetpulse tests bench
+      - run: bandit -r fleetpulse -ll -f json -o bandit.json || (cat bandit.json; exit 1)
+      - run: semgrep scan --metrics=off --config p/python --config p/owasp-top-ten --config .semgrep/fleetpulse.yml --error fleetpulse
+      - run: pip-audit -r requirements.txt --strict
+      - uses: actions/upload-artifact@v4
+        with: {name: sast, path: bandit.json}
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: {POSTGRES_USER: fleet, POSTGRES_HOST_AUTH_METHOD: trust, POSTGRES_DB: fleetpulse_test}
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-retries 20
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11", cache: pip}
+      - run: echo "TEST_DATABASE_URL=postgresql://fleet@localhost:5432/fleetpulse_test" >> $GITHUB_ENV
+      - run: pip install -r requirements-dev.txt
+      - name: unit + integration (real Postgres/Redis) with coverage gate
+        run: pytest --cov --cov-branch --cov-fail-under=80 --cov-report=xml --junitxml=junit.xml
+      - name: BDD acceptance
+        run: cd tests/bdd && behave features --junit --junit-directory ../../bdd-reports
+      - name: algorithm micro-benchmarks
+        run: python -m bench.algorithms_bench
+      - uses: actions/upload-artifact@v4
+        with: {name: test-reports, path: "coverage.xml\njunit.xml\nbdd-reports\nbench/results"}
+
+  model-eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11", cache: pip}
+      - run: pip install -r requirements.txt
+      - run: python -m fleetpulse.simulator.seed --vehicles 100000 --days 90 --out data
+      - run: python -m fleetpulse.ml.train
+      - name: quality gate - model must beat the static-threshold baseline on PR-AUC
+        run: |
+          python - <<'PY'
+          import json; r = {x["model"]: x for x in json.load(open("models/eval.json"))["results"]}
+          assert r["FleetPulse GBM (all features)"]["pr_auc"] > 1.5 * r["Baseline B: static thresholds"]["pr_auc"], r
+          PY
+      - uses: actions/upload-artifact@v4
+        with: {name: model, path: models/}
+
+  image:
+    needs: [lint-sast, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with: {registry: ghcr.io, username: "${{ github.actor }}", password: "${{ secrets.GITHUB_TOKEN }}"}
+      - uses: docker/build-push-action@v6
+        with: {push: "${{ github.ref == 'refs/heads/main' }}", load: true, tags: "ghcr.io/${{ github.repository }}:${{ github.sha }}"}
+      - uses: aquasecurity/trivy-action@0.24.0
+        with: {image-ref: "ghcr.io/${{ github.repository }}:${{ github.sha }}", severity: "CRITICAL,HIGH", exit-code: "1", format: sarif, output: trivy.sarif}
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with: {sarif_file: trivy.sarif}
+      - uses: anchore/sbom-action@v0
+        with: {image: "ghcr.io/${{ github.repository }}:${{ github.sha }}", format: cyclonedx-json}
+
+  e2e-dast-load:
+    needs: image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cp .env.example .env && docker compose up -d --build && sleep 120
+      - name: API load test
+        run: pip install httpx numpy psycopg[binary] && CONC=16 DUR=60 python -m bench.api_load
+      - name: DAST (OWASP ZAP API scan)
+        uses: zaproxy/action-api-scan@v0.7.0
+        with: {target: "http://localhost:8000/openapi.json", format: openapi, fail_action: true}
+      - run: pip install PyJWT && python -m bench.dast_probe
+      - name: chaos - kill a worker and verify recovery
+        run: docker compose kill worker-0 && sleep 5 && docker compose start worker-0 && sleep 30 && docker compose logs --tail 20 worker-0
+
+  infra:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - run: helm lint infra/helm/fleetpulse && helm template infra/helm/fleetpulse > /dev/null
+      - uses: hashicorp/setup-terraform@v3
+      - run: cd infra/terraform/aws && terraform fmt -check && terraform init -backend=false && terraform validate
+      - uses: bridgecrewio/checkov-action@v12
+        with: {directory: infra, soft_fail: true}

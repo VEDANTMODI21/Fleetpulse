@@ -1,0 +1,55 @@
+rules:
+  - id: jwt-verify-disabled
+    languages: [python]
+    severity: ERROR
+    message: JWT decoded without signature verification
+    pattern-either:
+      - pattern: 'jwt.decode(..., options={"verify_signature": False}, ...)'
+      - pattern: 'jwt.decode(..., algorithms=["none"], ...)'
+  - id: sql-fstring-with-request-data
+    languages: [python]
+    severity: ERROR
+    message: SQL built with an f-string containing a request-derived value; use parameters
+    patterns:
+      - pattern: '$CONN.execute(f"...{$X}...", ...)'
+      - pattern-inside: |
+          def $F(..., $REQ: Request, ...):
+            ...
+  - id: unverified-pickle-load
+    languages: [python]
+    severity: ERROR
+    message: pickle.load(s) outside the integrity-checked registry
+    patterns:
+      - pattern-either:
+          - pattern: pickle.load(...)
+          - pattern: pickle.loads(...)
+      - pattern-not-inside: |
+          def load_model(...):
+            ...
+  - id: requests-without-timeout
+    languages: [python]
+    severity: WARNING
+    message: HTTP client call without timeout
+    pattern-either:
+      - pattern: httpx.get($U)
+      - pattern: httpx.post($U, ...)
+      - pattern: requests.$M($U)
+  - id: hardcoded-secret-assignment
+    languages: [python]
+    severity: WARNING
+    message: literal secret assigned (must come from env/secret store)
+    patterns:
+      - pattern: '$K = "..."'
+      - metavariable-regex:
+          metavariable: $K
+          regex: (?i).*(password|secret|api_key|token).*
+  - id: subprocess-shell-true
+    languages: [python]
+    severity: ERROR
+    message: subprocess with shell=True
+    pattern: subprocess.$F(..., shell=True, ...)
+  - id: cors-allow-all
+    languages: [python]
+    severity: WARNING
+    message: CORS allows any origin
+    pattern: 'CORSMiddleware(..., allow_origins=["*"], ...)'

@@ -1,0 +1,22 @@
+groups:
+  - name: fleetpulse-slo
+    rules:
+      - alert: ApiP95LatencyHigh
+        expr: histogram_quantile(0.95, sum(rate(api_request_seconds_bucket[5m])) by (le)) > 0.2
+        for: 5m
+        labels: {severity: page}
+        annotations: {summary: "API p95 above 200 ms SLO"}
+      - alert: ApiErrorRateHigh
+        expr: sum(rate(api_requests_total{status=~"5.."}[5m])) / sum(rate(api_requests_total[5m])) > 0.01
+        for: 5m
+        labels: {severity: page}
+      - alert: IngestRejecting
+        expr: sum(rate(ingest_events_total{result="backpressure"}[1m])) > 0
+        for: 2m
+        labels: {severity: ticket}
+        annotations: {summary: "Ingest applying back-pressure: scale ingest / stream workers"}
+      - alert: IngestInvalidSpike
+        expr: sum(rate(ingest_events_total{result="invalid"}[5m])) / sum(rate(ingest_events_total[5m])) > 0.02
+        for: 10m
+        labels: {severity: ticket}
+        annotations: {summary: "More than 2% invalid payloads - likely OEM format change (check DLQ)"}

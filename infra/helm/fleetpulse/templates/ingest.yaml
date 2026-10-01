@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: ingest, labels: {{- include "fp.labels" . | nindent 4 }}}
+spec:
+  replicas: {{ .Values.ingest.replicas }}
+  selector: {matchLabels: {app: ingest}}
+  template:
+    metadata: {labels: {app: ingest}}
+    spec: {{- include "fp.pod" (dict "root" . "name" "ingest" "port" 8001 "resources" .Values.ingest.resources "command" (list "uvicorn" "fleetpulse.ingest.service:app" "--host" "0.0.0.0" "--port" "8001" "--http" "httptools")) | nindent 6 }}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: ingest}
+spec: {selector: {app: ingest}, ports: [{port: 80, targetPort: 8001}]}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: {name: ingest}
+spec:
+  scaleTargetRef: {apiVersion: apps/v1, kind: Deployment, name: ingest}
+  minReplicas: {{ .Values.ingest.autoscaling.min }}
+  maxReplicas: {{ .Values.ingest.autoscaling.max }}
+  metrics: [{type: Resource, resource: {name: cpu, target: {type: Utilization, averageUtilization: {{ .Values.ingest.autoscaling.cpu }}}}}]

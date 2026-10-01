@@ -1,0 +1,91 @@
+{
+  "target": "http://localhost:8000",
+  "passed": 14,
+  "total": 14,
+  "checks": [
+    {
+      "check": "no token -> 401",
+      "owasp": "API2",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "alg=none token rejected",
+      "owasp": "API2",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "forged signature rejected",
+      "owasp": "API2",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "bad password -> 401, no user enumeration",
+      "owasp": "API2",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "cross-tenant list denied",
+      "owasp": "API1",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "cross-tenant object read returns 404",
+      "owasp": "API1",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "technician cannot approve / erase / read audit",
+      "owasp": "API5",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "injection payloads rejected (4xx, never 5xx)",
+      "owasp": "API8",
+      "pass": true,
+      "detail": "[400, 404, 422]"
+    },
+    {
+      "check": "path traversal on static",
+      "owasp": "API8",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "page size capped",
+      "owasp": "API4",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "oversized agent prompt rejected",
+      "owasp": "API4",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "security headers present",
+      "owasp": "API8",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "errors are RFC7807 without stack traces",
+      "owasp": "API8",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "prompt injection refused",
+      "owasp": "LLM01",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}

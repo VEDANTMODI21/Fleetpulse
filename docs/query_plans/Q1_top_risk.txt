@@ -1,0 +1,84 @@
+-- BEFORE (306.25 ms)
+SELECT v.vin, r.p_fail_7d, r.top_factors,
+              (SELECT count(*) FROM alert a WHERE a.vehicle_id = v.id AND a.status = 'OPEN') AS open_alerts
+           FROM risk_score r JOIN vehicle v ON v.id = r.vehicle_id
+           WHERE v.fleet_id = 7 AND r.scored_on = '2026-08-29'
+           ORDER BY r.p_fail_7d DESC LIMIT 50
+
+Limit  (cost=14497.76..101922.71 rows=50 width=68) (actual time=92.548..280.308 rows=50 loops=1)
+  Buffers: shared hit=56100
+  ->  Gather Merge  (cost=14497.76..4557098.08 rows=2598 width=68) (actual time=81.279..269.014 rows=50 loops=1)
+        Workers Planned: 2
+        Workers Launched: 2
+        Buffers: shared hit=56100
+        ->  Sort  (cost=13497.74..13500.44 rows=1082 width=64) (actual time=36.805..36.819 rows=17 loops=3)
+              Sort Key: r.p_fail_7d DESC
+              Sort Method: top-N heapsort  Memory: 50kB
+              Buffers: shared hit=10500
+              Worker 0:  Sort Method: quicksort  Memory: 25kB
+              Worker 1:  Sort Method: quicksort  Memory: 25kB
+              ->  Hash Join  (cost=2259.04..13443.21 rows=1082 width=64) (actual time=18.114..36.500 rows=881 loops=3)
+                    Hash Cond: (r.vehicle_id = v.id)
+                    Buffers: shared hit=10426
+                    ->  Parallel Seq Scan on risk_score r  (cost=0.00..11076.67 rows=40954 width=46) (actual time=11.673..26.929 rows=33247 loops=3)
+                          Filter: (scored_on = '2026-08-29'::date)
+                          Rows Removed by Filter: 199500
+                          Buffers: shared hit=7440
+                    ->  Hash  (cost=2226.00..2226.00 rows=2643 width=22) (actual time=6.325..6.326 rows=2645 loops=3)
+                          Buckets: 4096  Batches: 1  Memory Usage: 177kB
+                          Buffers: shared hit=2928
+                          ->  Seq Scan on vehicle v  (cost=0.00..2226.00 rows=2643 width=22) (actual time=0.035..5.702 rows=2645 loops=3)
+                                Filter: (fleet_id = 7)
+                                Rows Removed by Filter: 97355
+                                Buffers: shared hit=2928
+        SubPlan 1
+          ->  Aggregate  (cost=1748.37..1748.38 rows=1 width=8) (actual time=3.928..3.928 rows=1 loops=50)
+                Buffers: shared hit=45600
+                ->  Seq Scan on alert a  (cost=0.00..1748.37 rows=1 width=0) (actual time=2.811..3.923 rows=2 loops=50)
+                      Filter: ((vehicle_id = v.id) AND (status = 'OPEN'::text))
+                      Rows Removed by Filter: 55756
+                      Buffers: shared hit=45600
+Planning:
+  Buffers: shared hit=14
+Planning Time: 0.559 ms
+JIT:
+  Functions: 52
+  Options: Inlining false, Optimization false, Expressions true, Deforming true
+  Timing: Generation 2.556 ms, Inlining 0.000 ms, Optimization 1.413 ms, Emission 44.929 ms, Total 48.898 ms
+Execution Time: 281.639 ms
+
+-- AFTER (5.741 ms)
+SELECT v.vin, r.p_fail_7d, r.top_factors,
+              (SELECT count(*) FROM alert a WHERE a.vehicle_id = v.id AND a.status = 'OPEN') AS open_alerts
+           FROM risk_score r JOIN vehicle v ON v.id = r.vehicle_id
+           WHERE v.fleet_id = 7 AND r.scored_on = '2026-08-29'
+           ORDER BY r.p_fail_7d DESC LIMIT 50
+
+Limit  (cost=0.73..1529.02 rows=50 width=69) (actual time=0.049..5.779 rows=50 loops=1)
+  Buffers: shared hit=7618
+  ->  Nested Loop  (cost=0.73..80969.48 rows=2649 width=69) (actual time=0.048..5.769 rows=50 loops=1)
+        Buffers: shared hit=7618
+        ->  Index Scan using ix_risk_day_p on risk_score r  (cost=0.42..32694.46 rows=99104 width=47) (actual time=0.011..1.208 rows=1854 loops=1)
+              Index Cond: (scored_on = '2026-08-29'::date)
+              Buffers: shared hit=1864
+        ->  Memoize  (cost=0.30..0.37 rows=1 width=22) (actual time=0.002..0.002 rows=0 loops=1854)
+              Cache Key: r.vehicle_id
+              Cache Mode: logical
+              Hits: 0  Misses: 1854  Evictions: 0  Overflows: 0  Memory Usage: 126kB
+              Buffers: shared hit=5562
+              ->  Index Scan using vehicle_pkey on vehicle v  (cost=0.29..0.36 rows=1 width=22) (actual time=0.002..0.002 rows=0 loops=1854)
+                    Index Cond: (id = r.vehicle_id)
+                    Filter: (fleet_id = 7)
+                    Rows Removed by Filter: 1
+                    Buffers: shared hit=5562
+        SubPlan 1
+          ->  Aggregate  (cost=8.30..8.31 rows=1 width=8) (actual time=0.003..0.003 rows=1 loops=50)
+                Buffers: shared hit=192
+                ->  Index Only Scan using ix_alert_open_vehicle on alert a  (cost=0.28..8.30 rows=1 width=0) (actual time=0.002..0.002 rows=2 loops=50)
+                      Index Cond: (vehicle_id = v.id)
+                      Heap Fetches: 92
+                      Buffers: shared hit=192
+Planning:
+  Buffers: shared hit=14
+Planning Time: 0.254 ms
+Execution Time: 5.936 ms

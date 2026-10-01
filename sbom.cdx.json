@@ -1,0 +1,248 @@
+{
+ "bomFormat": "CycloneDX",
+ "specVersion": "1.5",
+ "version": 1,
+ "metadata": {
+  "component": {
+   "type": "application",
+   "name": "fleetpulse",
+   "version": "1.0.0"
+  }
+ },
+ "components": [
+  {
+   "type": "library",
+   "name": "fastapi",
+   "version": "0.141.1",
+   "licenses": [
+    {
+     "license": {
+      "name": "MIT"
+     }
+    }
+   ],
+   "purl": "pkg:pypi/fastapi@0.141.1"
+  },
+  {
+   "type": "library",
+   "name": "uvicorn",
+   "version": "0.46.0",
+   "licenses": [
+    {
+     "license": {
+      "name": "BSD-3-Clause"
+     }
+    }
+   ],
+   "purl": "pkg:pypi/uvicorn@0.46.0"
+  },
+  {
+   "type": "library",
+   "name": "httptools",
+   "version": "0.8.0",
+   "licenses": [
+    {
+     "license": {
+      "name": "MIT"
+     }
+    }
+   ],
+   "purl": "pkg:pypi/httptools@0.8.0"
+  },
+  {
+   "type": "library",
+   "name": "uvloop",
+   "version": "0.22.1",
+   "licenses": [
+    {
+     "license": {
+      "name": "MIT License"
+     }
+    }
+   ],
+   "purl": "pkg:pypi/uvloop@0.22.1"
+  },
+  {
+   "type": "library",
+   "name": "pydantic",
+   "version": "2.13.3",
+   "licenses": [
+    {
+     "license": {
+      "name": "MIT"
+     }
+    }
+   ],
+   "purl": "pkg:pypi/pydantic@2.13.3"
+  },
+  {
+   "type": "library",
+   "name": "psycopg",
+   "version": "3.3.6",
+   "licenses": [
+    {
+     "license": {
+      "name": "LGPL-3.0-only"
+     }
+    }
+   ],
+   "purl": "pkg:pypi/psycopg@3.3.6"
+  },
+  {
+   "type": "library",
+   "name": "psycopg-pool",
+   "version": "3.3.3",
+   "licenses": [
+    {
+     "license": {
+      "name": "LGPL-3.0-only"
+     }
+    }
+   ],
+   "purl": "pkg:pypi/psycopg-pool@3.3.3"
+  },
+  {
+   "type": "library",
+   "name": "redis",
+   "version": "8.1.0",
+   "licenses": [
+    {
+     "license": {
+      "name": "MIT"
+     }
+    }
+   ],
+   "purl": "pkg:pypi/redis@8.1.0"
+  },
+  {
+   "type": "library",
+   "name": "orjson",
+   "version": "3.12.0",
+   "licenses": [
+    {
+     "license": {
+      "name": "MPL-2.0 AND (Apache-2.0 OR MIT)"
+     }
+    }
+   ],
+   "purl": "pkg:pypi/orjson@3.12.0"
+  },
+  {
+   "type": "library",
+   "name": "pyjwt",
+   "version": "2.13.0",
+   "licenses": [
+    {
+     "license": {
+      "name": "MIT"
+     }
+    }
+   ],
+   "purl": "pkg:pypi/pyjwt@2.13.0"
+  },
+  {
+   "type": "library",
+   "name": "prometheus-client",
+   "version": "0.26.0",
+   "licenses": [
+    {
+     "license": {
+      "name": "Apache-2.0 AND BSD-2-Clause"
+     }
+    }
+   ],
+   "purl": "pkg:pypi/prometheus-client@0.26.0"
+  },
+  {
+   "type": "library",
+   "name": "numpy",
+   "version": "2.4.4",
+   "licenses": [
+    {
+     "license": {
+      "name": "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0"
+     }
+    }
+   ],
+   "purl": "pkg:pypi/numpy@2.4.4"
+  },
+  {
+   "type": "library",
+   "name": "pandas",
+   "version": "3.0.2",
+   "licenses": [
+    {
+     "license": {
+      "name": "BSD-3-Clause"
+     }
+    }
+   ],
+   "purl": "pkg:pypi/pandas@3.0.2"
+  },
+  {
+   "type": "library",
+   "name": "pyarrow",
+   "version": "25.0.1",
+   "licenses": [
+    {
+     "license": {
+      "name": "Apache-2.0"
+     }
+    }
+   ],
+   "purl": "pkg:pypi/pyarrow@25.0.1"
+  },
+  {
+   "type": "library",
+   "name": "duckdb",
+   "version": "1.5.5",
+   "licenses": [
+    {
+     "license": {
+      "name": "MIT License"
+     }
+    }
+   ],
+   "purl": "pkg:pypi/duckdb@1.5.5"
+  },
+  {
+   "type": "library",
+   "name": "scikit-learn",
+   "version": "1.8.0",
+   "licenses": [
+    {
+     "license": {
+      "name": "BSD-3-Clause"
+     }
+    }
+   ],
+   "purl": "pkg:pypi/scikit-learn@1.8.0"
+  },
+  {
+   "type": "library",
+   "name": "httpx",
+   "version": "0.28.1",
+   "licenses": [
+    {
+     "license": {
+      "name": "BSD-3-Clause"
+     }
+    }
+   ],
+   "purl": "pkg:pypi/httpx@0.28.1"
+  },
+  {
+   "type": "library",
+   "name": "confluent-kafka",
+   "version": "2.15.1",
+   "licenses": [
+    {
+     "license": {
+      "name": "Apache Software License"
+     }
+    }
+   ],
+   "purl": "pkg:pypi/confluent-kafka@2.15.1"
+  }
+ ]
+}

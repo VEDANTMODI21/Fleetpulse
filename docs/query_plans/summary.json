@@ -1,0 +1,17 @@
+{
+  "Q1_top_risk": {
+    "before_ms": 306.25,
+    "after_ms": 5.741,
+    "speedup": 53.3
+  },
+  "Q2_alert_page": {
+    "before_ms": 19.315,
+    "after_ms": 0.052,
+    "speedup": 371.4
+  },
+  "Q3_fleet_trend": {
+    "before_ms": 560.579,
+    "after_ms": 0.046,
+    "speedup": 12186.5
+  }
+}

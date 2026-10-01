@@ -1,0 +1,90 @@
+# One-command local stack:  docker compose up --build
+# Seeds 100K vehicles x 90 days, trains the model, loads Postgres, then streams live telemetry.
+x-app: &app
+  build: .
+  image: fleetpulse:1.0.0
+  env_file: .env
+  environment: &env
+    DATABASE_URL: postgresql://fleet:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/fleetpulse
+    REDIS_URL: redis://redis:6379/0
+    JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+    DEMO_PASSWORD: ${DEMO_PASSWORD:?Set DEMO_PASSWORD in .env}
+    INGEST_KEY_ALPHA: ${INGEST_KEY_ALPHA:?Set INGEST_KEY_ALPHA in .env}
+    INGEST_KEY_BETA: ${INGEST_KEY_BETA:?Set INGEST_KEY_BETA in .env}
+    INGEST_KEY_GAMMA: ${INGEST_KEY_GAMMA:?Set INGEST_KEY_GAMMA in .env}
+    BUS: kafka
+    KAFKA_BROKERS: kafka:9092
+    PARTITIONS: "12"
+    DATA_DIR: /data
+    MODEL_DIR: /models
+    LAKE_DIR: /data/lake
+  volumes: [lake:/data, models:/models]
+  depends_on:
+    postgres: {condition: service_healthy}
+    redis: {condition: service_healthy}
+    kafka: {condition: service_healthy}
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment: {POSTGRES_USER: fleet, POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}", POSTGRES_DB: fleetpulse}
+    volumes: [pg:/var/lib/postgresql/data]
+    healthcheck: {test: ["CMD", "pg_isready", "-U", "fleet"], interval: 5s, retries: 20}
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck: {test: ["CMD", "redis-cli", "ping"], interval: 5s, retries: 20}
+  kafka:
+    image: apache/kafka:3.8.0          # KRaft mode, no ZooKeeper
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_NUM_PARTITIONS: 12
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LOG_RETENTION_HOURS: 72
+    healthcheck: {test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list"], interval: 10s, retries: 20}
+
+  seed:                               # one-shot job: dataset -> model -> Postgres
+    <<: *app
+    command: ["sh", "-c", "python -m fleetpulse.simulator.seed --out /data && python -m fleetpulse.ml.train && python -m fleetpulse.storage.seed_pg --data /data --models /models && python -m fleetpulse.storage.apply_sql db/optimize.sql"]
+    restart: "no"
+
+  api:
+    <<: *app
+    ports: ["8000:8000"]
+    depends_on: {seed: {condition: service_completed_successfully}}
+    deploy: {replicas: 1}
+  ingest:
+    <<: *app
+    command: ["uvicorn", "fleetpulse.ingest.service:app", "--host", "0.0.0.0", "--port", "8001", "--http", "httptools"]
+    environment: {<<: *env, PORT: "8001"}
+    ports: ["8001:8001"]
+  worker-0:
+    <<: *app
+    command: ["python", "-m", "fleetpulse.stream.worker"]
+    environment: {<<: *env, WORKER_INDEX: "0", WORKER_REPLICAS: "2"}
+    depends_on: {seed: {condition: service_completed_successfully}}
+  worker-1:
+    <<: *app
+    command: ["python", "-m", "fleetpulse.stream.worker"]
+    environment: {<<: *env, WORKER_INDEX: "1", WORKER_REPLICAS: "2"}
+    depends_on: {seed: {condition: service_completed_successfully}}
+  simulator:
+    <<: *app
+    command: ["python", "-m", "fleetpulse.simulator.run", "--rate", "${SIM_RATE:-10000}", "--mode", "http", "--target", "http://ingest:8001"]
+    depends_on: {seed: {condition: service_completed_successfully}, ingest: {condition: service_started}}
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    volumes: [./infra/compose/prometheus.yml:/etc/prometheus/prometheus.yml:ro, ./infra/compose/alerts.yml:/etc/prometheus/alerts.yml:ro]
+    ports: ["9090:9090"]
+  grafana:
+    image: grafana/grafana:11.2.0
+    ports: ["3000:3000"]
+    volumes: [./infra/compose/grafana:/etc/grafana/provisioning:ro]
+
+volumes: {pg: {}, lake: {}, models: {}}

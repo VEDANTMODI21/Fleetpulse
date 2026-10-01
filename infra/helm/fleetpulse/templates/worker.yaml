@@ -1,0 +1,30 @@
+# StatefulSet gives each worker a stable identity (worker-0..N) -> stable consumer name, so a restarted
+# pod re-reads its own pending entries first; Kafka consumer-group rebalancing handles scale-out.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: worker, labels: {{- include "fp.labels" . | nindent 4 }}}
+spec:
+  serviceName: worker
+  replicas: {{ .Values.worker.replicas }}
+  podManagementPolicy: Parallel
+  selector: {matchLabels: {app: worker}}
+  template:
+    metadata: {labels: {app: worker}}
+    spec: {{- include "fp.pod" (dict "root" . "name" "worker" "resources" .Values.worker.resources "command" (list "python" "-m" "fleetpulse.stream.worker")) | nindent 6 }}
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata: {name: worker}
+spec:
+  scaleTargetRef: {kind: StatefulSet, name: worker}
+  minReplicaCount: {{ .Values.worker.replicas }}
+  maxReplicaCount: {{ .Values.worker.maxReplicas }}
+  triggers:
+    - type: kafka
+      metadata: {bootstrapServers: {{ .Values.config.KAFKA_BROKERS | quote }}, consumerGroup: stream-processor,
+                 topic: telemetry.canonical, lagThreshold: {{ .Values.worker.lagThreshold | quote }}}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: {name: worker}
+spec: {maxUnavailable: 1, selector: {matchLabels: {app: worker}}}

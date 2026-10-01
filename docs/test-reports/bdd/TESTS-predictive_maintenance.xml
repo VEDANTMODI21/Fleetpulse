@@ -1,0 +1,51 @@
+<testsuite name="predictive_maintenance.Predictive maintenance for a fleet manager" tests="4" errors="0" failures="0" skipped="0" time="0.128671" timestamp="2026-09-27T15:37:58.901534" hostname="vm"><testcase classname="predictive_maintenance.Predictive maintenance for a fleet manager" name="See the riskiest vehicles first" status="passed" time="0.028073"><system-out>
+<![CDATA[
+@scenario.begin
+  Scenario: See the riskiest vehicles first
+    Given I am signed in as the fleet manager of the fleet with the riskiest vehicle ... passed in 0.007s
+    When I open the at-risk list ... passed in 0.021s
+    Then I see vehicles of my fleet only ... passed in 0.000s
+    And they are ordered from highest to lowest 7-day risk ... passed in 0.000s
+    And each high-risk vehicle explains why it is at risk ... passed in 0.000s
+
+@scenario.end
+--------------------------------------------------------------------------------
+]]>
+</system-out></testcase><testcase classname="predictive_maintenance.Predictive maintenance for a fleet manager" name="Plan the workshop within technician capacity" status="passed" time="0.029009"><system-out>
+<![CDATA[
+@scenario.begin
+  Scenario: Plan the workshop within technician capacity
+    Given I am signed in as the fleet manager of the fleet with the riskiest vehicle ... passed in 0.006s
+    When I ask for a workshop plan with 8 technician hours ... passed in 0.023s
+    Then the plan uses at most 8 hours ... passed in 0.000s
+    And every planned vehicle is routed to a depot ... passed in 0.000s
+
+@scenario.end
+--------------------------------------------------------------------------------
+]]>
+</system-out></testcase><testcase classname="predictive_maintenance.Predictive maintenance for a fleet manager" name="Copilot proposes a work order that needs my approval" status="passed" time="0.057136"><system-out>
+<![CDATA[
+@scenario.begin
+  Scenario: Copilot proposes a work order that needs my approval
+    Given I am signed in as the fleet manager of the fleet with the riskiest vehicle ... passed in 0.005s
+    When I ask the copilot to schedule a service for my riskiest vehicle ... passed in 0.029s
+    Then a work order is created with status "PROPOSED" ... passed in 0.000s
+    When I approve that work order ... passed in 0.019s
+    Then its status becomes "APPROVED" ... passed in 0.000s
+    And the agent action is recorded in the audit log ... passed in 0.004s
+
+@scenario.end
+--------------------------------------------------------------------------------
+]]>
+</system-out></testcase><testcase classname="predictive_maintenance.Predictive maintenance for a fleet manager" name="I cannot see another fleet's data" status="passed" time="0.014453"><system-out>
+<![CDATA[
+@scenario.begin
+  Scenario: I cannot see another fleet's data
+    Given I am signed in as the fleet manager of the fleet with the riskiest vehicle ... passed in 0.010s
+    When I request the at-risk list of another fleet ... passed in 0.004s
+    Then the request is denied with status 403 ... passed in 0.000s
+
+@scenario.end
+--------------------------------------------------------------------------------
+]]>
+</system-out></testcase></testsuite>
